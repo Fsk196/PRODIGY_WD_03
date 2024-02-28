@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=
+    , initial-scale=1.0"
+    />
+    <link rel="stylesheet" href="output.css" />
+    <!-- <script src="script.js"></script> -->
+    <title>Tic-Tac-Toe</title>
+  </head>
+  <body class="bg-black h-screen text-white">
+    <div class="container mx-auto">
+      <div class="flex flex-col justify-center items-center w-full h-screen">
+        <h2 class="font-semibold text-5xl text-white my-5">Tic-Tac-Toe</h2>
+        <div id="playerSelection" class="flex gap-5">
+          <label for="playerType" class="text-white text-2xl"
+            >Select Players:</label
+          >
+          <select
+            id="playerType"
+            class="text-black p-2 rounded-md text-lg font-bold"
+          >
+            <option value="2" class="text-black p-2 font-bold">
+              2 Players
+            </option>
+            <option value="1" class="text-black p-2 font-bold">
+              Against Computer
+            </option>
+          </select>
+        </div>
+
+        <div id="status" class="text-3xl my-3 p-2 rounded-xl bg-orange-400"></div>
+
+        <div class="flex flex-col w-full my-5 justify-center items-center">
+          <div id="stats" class="w-full text-center my-6 text-2xl"></div>
+
+          <div
+            id="board"
+            class="border-4 p-5 grid cols-3 items-center"
+          ></div>
+
+        </div>
+        <button
+          id="resetButton"
+          onclick="resetGame()"
+          class="text-xl px-4 py-2 text-gray-50 rounded-md bg-orange-400"
+        >
+          Reset Game
+        </button>
+      </div>
+    </div>
+
+    <script>
+      const board = document.getElementById("board");
+      const statusElement = document.getElementById("status");
+      const playerSelection = document.getElementById("playerType");
+      const resetButton = document.getElementById("resetButton");
+      const statsElement = document.getElementById("stats");
+
+      let currentPlayer = "X";
+      let gameOver = false;
+      let computerPlayer = false;
+
+      let gameCount = 0;
+      let player1Wins = 0;
+      let player2Wins = 0;
+      let computerWins = 0;
+      let ties = 0;
+
+      playerSelection.addEventListener("change", () => {
+        computerPlayer = playerSelection.value === "1";
+        resetGame();
+      });
+
+      function resetGame() {
+        Array.from(document.querySelectorAll(".cell")).forEach((cell) => {
+          cell.textContent = "";
+        });
+        statusElement.textContent = "Status!!";
+        currentPlayer = "X";
+        gameOver = false;
+        resetButton.style.display = "none";
+
+        if (computerPlayer && currentPlayer === "O") {
+          makeComputerMove();
+        }
+
+        gameCount++;
+        updateStats();
+      }
+
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.dataset.index = i;
+        cell.addEventListener("click", handleCellClick);
+        board.appendChild(cell);
+      }
+
+      function handleCellClick(event) {
+        if (gameOver) return;
+
+        const cell = event.target;
+        if (cell.textContent === "") {
+          cell.textContent = currentPlayer;
+          if (checkWinner()) {
+            statusElement.textContent = `${currentPlayer} wins!`;
+            gameOver = true;
+
+            if (currentPlayer === "X") {
+              player1Wins++;
+            } else if (currentPlayer === "O" && computerPlayer) {
+              computerWins++;
+            } else {
+              player2Wins++;
+            }
+          } else if (isBoardFull()) {
+            statusElement.textContent = "It's a draw!";
+            gameOver = true;
+            ties++;
+          } else {
+            switchPlayer();
+            if (computerPlayer && currentPlayer === "O") {
+              makeComputerMove();
+            }
+          }
+
+          updateStats();
+
+          if (gameOver) {
+            resetButton.style.display = "block";
+          }
+        }
+      }
+
+      function switchPlayer() {
+        currentPlayer = currentPlayer === "X" ? "O" : "X";
+      }
+
+      function makeComputerMove() {
+        if (gameOver) return;
+
+        const emptyCells = Array.from(
+          document.querySelectorAll(".cell")
+        ).filter((cell) => cell.textContent === "");
+        if (emptyCells.length === 0) return;
+
+        for (const cell of emptyCells) {
+          cell.textContent = "O";
+          if (checkWinner()) {
+            statusElement.textContent = "Computer wins!";
+            gameOver = true;
+            computerWins++;
+            updateStats();
+            return;
+          }
+          cell.textContent = "";
+        }
+
+        for (const cell of emptyCells) {
+          cell.textContent = "X";
+          if (checkWinner()) {
+            cell.textContent = "O";
+            switchPlayer();
+            return;
+          }
+          cell.textContent = "";
+        }
+
+        const randomIndex = Math.floor(Math.random() * emptyCells.length);
+        const computerCell = emptyCells[randomIndex];
+        computerCell.textContent = currentPlayer;
+
+        if (checkWinner()) {
+          statusElement.textContent = "Computer wins!";
+          gameOver = true;
+          computerWins++;
+        } else if (isBoardFull()) {
+          statusElement.textContent = "It's a draw!";
+          gameOver = true;
+          ties++;
+        } else {
+          switchPlayer();
+        }
+
+        updateStats();
+      }
+
+      function checkWinner() {
+        const cells = document.querySelectorAll(".cell");
+
+        for (let i = 0; i < 3; i++) {
+          if (
+            cells[i * 3].textContent &&
+            cells[i * 3].textContent === cells[i * 3 + 1].textContent &&
+            cells[i * 3].textContent === cells[i * 3 + 2].textContent
+          ) {
+            return true;
+          }
+
+          if (
+            cells[i].textContent &&
+            cells[i].textContent === cells[i + 3].textContent &&
+            cells[i].textContent === cells[i + 6].textContent
+          ) {
+            return true;
+          }
+        }
+
+        if (
+          cells[0].textContent &&
+          cells[0].textContent === cells[4].textContent &&
+          cells[0].textContent === cells[8].textContent
+        ) {
+          return true;
+        }
+
+        if (
+          cells[2].textContent &&
+          cells[2].textContent === cells[4].textContent &&
+          cells[2].textContent === cells[6].textContent
+        ) {
+          return true;
+        }
+
+        return false;
+      }
+
+      function isBoardFull() {
+        const cells = document.querySelectorAll(".cell");
+        return Array.from(cells).every((cell) => cell.textContent !== "");
+      }
+
+      function updateStats() {
+        statsElement.textContent = `Games Played: ${gameCount} | Player 1 Wins: ${player1Wins} | Player 2 Wins: ${player2Wins} | Computer Wins: ${computerWins} | Ties: ${ties}`;
+      }
+
+      resetGame();
+    </script>
+  </body>
+</html>
